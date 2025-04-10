@@ -1,12 +1,14 @@
-# Compute Engine Job Template
+# Compute Engine Job - Result Relay
 
-This project serves as proof-of-concept implementation of a Compute Engine job for application builders in Vana's Data Access architecture.
+This project serves as a simple query result relay implementation of a Compute Engine job for application builders in Vana's Data Access architecture.
+
+No processing steps are performed, instead the query results are simply relayed from the input directory to the output directory for download by job owners.
 
 ## Overview
 
-The worker leverages the test sqlite DB mounted to `/mnt/input/query_results.db` (dir overridable via `INPUT_PATH` env variable) following an unwrapped schema used for demoing the query engine in the hope of an eventual, consistent E2E workflow.
+The worker leverages the test sqlite DB mounted to `/mnt/input/query_results.db` (dir overridable via `INPUT_PATH` env variable).
 
-It processes the input data and outputs a `stats.json` under `/mnt/output/stats.json` (dir overridable via `OUTPUT_PATH` env variable).
+It outputs the input under `/mnt/output/query_results.db` (dir overridable via `OUTPUT_PATH` env variable).
 
 ## Quick Start
 

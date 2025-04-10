@@ -1,0 +1,45 @@
+name: Image Checks
+
+
+on:
+  push:
+    branches: [ "**" ]
+
+jobs:
+  image-checks:
+    name: Image Lifecycle
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Run image-build script
+        run: ./image-build.sh
+        shell: bash
+      
+      - name: Run image-run script
+        run: ./image-run.sh
+        shell: bash
+
+      - name: Upload exported image
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-stats
+          path: "output/stats.json"
+          retention-days: 7
+      
+      - name: Run image-export script
+        run: ./image-export.sh
+        shell: bash
+      
+      - name: Upload exported image
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: "*.tar"
+          retention-days: 7

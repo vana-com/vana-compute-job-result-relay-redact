@@ -1,0 +1,1 @@
+docker build -t my-compute-job .

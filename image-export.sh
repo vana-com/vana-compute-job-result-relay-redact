@@ -1,1 +1,0 @@
-docker save -o my-compute-job.tar my-compute-job

@@ -56,7 +56,7 @@ def main() -> None:
             if not execute_query(params):
                 sys.exit(2)
         
-        shutil.copy(params.db_path, params.input_path)
+        shutil.copy(params.db_path, params.output_path)
         
     except Exception as e:
         print(f"Error in worker execution: {e}")

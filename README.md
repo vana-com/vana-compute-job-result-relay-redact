@@ -1,36 +1,66 @@
-# Compute Engine Job - Result Relay
+# Vana PII Anonymization Compute Job
 
-This project serves as a simple query result relay implementation of a Compute Engine job for application builders in Vana's Data Access architecture.
+This is a **privacy-preserving compute job** that automatically detects and anonymizes personally identifiable information (PII) in query results using Microsoft Presidio. Designed for Vana's Trusted Execution Environment (TEE) infrastructure, it ensures sensitive data is protected while maintaining analytical value.
 
-No processing steps are performed, instead the query results are simply relayed from the input directory to the output directory for download by job owners.
+**🔒 Privacy-First Processing**: Processes query results through a comprehensive PII anonymization pipeline, ensuring sensitive data never leaves the compute environment in raw form. Perfect for DataDAOs requiring GDPR, HIPAA, or other privacy compliance.
 
-## Overview
+## What This Compute Job Does
 
-The worker executes the query against the Query Engine and then copies the sqlite DB downloaded under `/mnt/input/query_results.db` (dir overridable via `INPUT_PATH` env variable) to output the results under `/mnt/output/query_results.db` (dir overridable via `OUTPUT_PATH` env variable).
+🎯 **Core Function**: Transforms sensitive query results into privacy-compliant datasets through automated PII detection and anonymization.
+
+**Processing Pipeline**:
+1. **Receives** query results from Vana Query Engine at `/mnt/input/query_results.db`
+2. **Analyzes** data using Microsoft Presidio + custom recognizers to detect PII entities
+3. **Anonymizes** sensitive information using configurable strategies (masking, redaction, replacement)  
+4. **Outputs** privacy-protected database to `/mnt/output/query_results.db` + detailed anonymization report
+
+**Real-World Impact**: Enables safe data sharing and analysis while protecting individual privacy and ensuring regulatory compliance.
+
+## PII Anonymization Features
+
+### 🔍 **Comprehensive PII Detection**
+**Supported Entity Types:**
+- 👤 **Person Names**: `John Smith` → `Jo** Sm***` (custom masking)
+- 📧 **Email Addresses**: `user@example.com` → `us***@e***.com` (custom masking)  
+- 📞 **Phone Numbers**: `(555) 123-4567` → `(***) ***-4567` (mask ending)
+- 💳 **Credit Cards**: `4532-1234-5678-9012` → `4532-12************` (secure masking)
+- 🏠 **Addresses**: `123 Main St, New York` → `1** M*** St, N** Y***` (location masking)
+- 🆔 **SSNs**: `123-45-6789` → *[completely redacted]* (full removal)
+- 🌐 **IP Addresses**: `192.168.1.1` → `192.***.***.***` (network masking)
+- 🔗 **URLs**: Personal website links masked to protect identity
 
 ## Quick Start
 
-1. Edit the `dummy_data.sql` script with the DLP data refiner schema, seed some dummy data, and add your query at the bottom to simulate the `results` table creation.
-2. Run `sqlite3 ./input/query_results.db < dummy_data.sql` to transform the seed data into an SQLite database that can be processed by the job.
-3. Update the `worker.py` to add any processing logic for artifact generation.
-4. Have the worker output any artifacts your application needs in the output dir `os.getenv("OUTPUT_PATH", "/mnt/output")`.
-5. Run the `image-build.sh` and `image-run.sh` scripts to test your worker implementation. Make sure to set `DEV_MODE=1` to use the local database file without requiring a real query engine.
-6. Run the `image-export.sh` script to generate the `my-compute-job.tar` archive. Gzip this manually or push your changes to main to build a release (with SHA256 checksum).
+1. **Prepare Test Data**: Edit `dummy_data.sql` with realistic PII data to test anonymization
+2. **Generate Database**: Run `sqlite3 ./input/query_results.db < dummy_data.sql`
+3. **Configure Anonymization**: Customize `config/presidio_config.json` for your PII detection needs
+4. **Test Locally**: Run `./scripts/image-build.sh && ./scripts/image-run.sh` with `DEV_MODE=1`
+5. **Review Results**: Check `/mnt/output/query_results.db` for anonymized data and `anonymization_report.json` for statistics
+6. **Deploy**: Export with `./scripts/image-export.sh` and submit through Vana app for DLP approval
 
 ## Development vs Production Mode
 
 The worker supports two modes of operation:
 
-- **Development Mode**: Set `DEV_MODE=1` to use a local database file without connecting to the query engine. This is useful for testing and development.
-  ```
-  # Example: Running in development mode
-  docker run -e DEV_MODE=1 -v /local/path/to/input:/mnt/input -v /local/path/to/output:/mnt/output my-compute-job
+- **Development Mode**: Set `DEV_MODE=1` to test PII anonymization on local databases without connecting to the query engine.
+  ```bash
+  # Example: Test anonymization locally
+  docker run -e DEV_MODE=1 \
+    -v /local/path/to/input:/mnt/input \
+    -v /local/path/to/output:/mnt/output \
+    my-compute-job
+  # Check anonymized results in output/query_results.db and anonymization_report.json
   ```
 
-- **Production Mode**: The default mode connects to the query engine using the `QUERY` and `QUERY_SIGNATURE` environment variables to execute the query first, then processes the results.
-  ```
-  # Example: Running in production mode
-  docker run -e QUERY="SELECT user_id, locale FROM users" -e QUERY_SIGNATURE="xyz123" -e QUERY_ENGINE_URL="https://query.vana.org" -v /local/path/to/output:/mnt/output my-compute-job
+- **Production Mode**: Connects to Vana Query Engine, receives query results, and applies PII anonymization before output.
+  ```bash
+  # Example: Production anonymization pipeline  
+  docker run -e QUERY="SELECT user_id, name, email, address FROM users" \
+    -e QUERY_SIGNATURE="xyz123" \
+    -e QUERY_ENGINE_URL="https://query.vana.org" \
+    -v /local/path/to/output:/mnt/output \
+    my-compute-job
+  # Outputs privacy-compliant anonymized data automatically
   ```
 
 ## Platform Compatibility
@@ -50,11 +80,20 @@ The `image-export.sh` script builds an exportable `.tar` for uploading in remote
 
 ## Generating test data
 
-The script `dummy_data.sql` can be modified with the relevant schema and dummy data insertion. The query at the bottom of the script file simulates the Query Engine `results` table creation when processing queries.
+The script `dummy_data.sql` should include **realistic PII data** to properly test the anonymization pipeline. Add various types of sensitive information:
 
-To transform this dummy data into the input `query_results.db` SQLite DB simply run `sqlite3 ./input/query_results.db < dummy_data.sql`.
+```sql
+-- Include test data with PII for anonymization testing
+INSERT INTO users VALUES 
+  ('u001', 'john.doe@example.com', 'John Smith', '(555) 123-4567', 
+   '123 Main St, New York, NY', '123-45-6789', '4532-1234-5678-9012'),
+  ('u002', 'jane.smith@test.com', 'Jane Doe', '+1-555-987-6543',
+   '456 Oak Ave, Los Angeles, CA', '987-65-4321', '5555-4444-3333-2222');
+```
 
-*Note:* Only the `results` table will be available in production compute engine jobs. The other tables serve to seed dummy data.
+To transform this test data: `sqlite3 ./input/query_results.db < dummy_data.sql`
+
+**🔒 Privacy Note**: The anonymization pipeline will automatically detect and protect all PII entities in your test data, demonstrating real-world privacy protection capabilities.
 
 ## Building a Compute Job
 
@@ -65,30 +104,48 @@ To transform this dummy data into the input `query_results.db` SQLite DB simply 
 - Input data is provided from the compute engine to the compute job container through a mounted `/mnt/input` directory.
   - This directory contains a single `query_results.db` SQLite file downloaded from the Query Engine after a query has been successfully processed.
   - A queryable `results` table is the only table in the mounted `query_results.db`. This table contains all of the queried data points of the query submitted to the Query Engine through the Compute Engine API.
-  - *Example:*
+  - *Example with PII Anonymization:*
 ```sql
 -- Refiner Schema:
-CREATE TABLE users (id AUTOINCREMENT, name TEXT, locale TEXT, zip_code TEXT, city TEXT);
+CREATE TABLE users (id TEXT, name TEXT, email TEXT, address TEXT, ssn TEXT);
 
 -- Application Builder Query:
-SELECT id, name, locale FROM users;
+SELECT id, name, email, address FROM users;
 
--- Query Engine outputs `query_results.db` with schema
-CREATE TABLE results (id INTEGER, name TEXT, locale text);
+-- Query Engine outputs raw `query_results.db`:
+CREATE TABLE results (id TEXT, name TEXT, email TEXT, address TEXT);
+-- Raw data: ('u001', 'John Smith', 'john@example.com', '123 Main St')
 
--- Compute Job processing:
-SELECT id, name FROM results;
-SELECT locale FROM results;
-…
+-- PII Anonymization Compute Job Processing:
+-- 🔍 Detects: PERSON, EMAIL_ADDRESS, LOCATION entities
+-- 🛡️ Anonymizes: names, emails, addresses automatically
+-- ✅ Preserves: user IDs and analytical structure
+
+-- Final anonymized output:
+-- ('u001', 'Jo** Sm***', 'jo***@e***.com', '1** M*** St')
 ```
 - Output data Artifacts are provided to the Compute Engine from the Compute Job container through a mounted `/mnt/output` directory.
 - Any Artifact files generated in this directory by the Compute Job will later be available for consumption and download by the job owner (=application builder) through the Compute Engine API.
 
-### Example Job Query Result Processing Workflow
+### PII Anonymization Workflow
 
-1. Query data from `results` table of `/mnt/input/query_results.db` with SQLite.
-2. Run custom logic to process (transform / aggregate / …) query results.
-Write generated Artifacts to the `/mnt/output` directory for later download by the application builder / job owner wallet through the Compute Engine API.
+1. **Query Ingestion**: Read raw query results from `/mnt/input/query_results.db`
+2. **PII Detection**: Analyze each data field using Microsoft Presidio + custom recognizers
+3. **Smart Anonymization**: Apply configured strategies while preserving analytical value:
+   - Person names → Custom partial masking (`John Smith` → `Jo** Sm***`)
+   - Emails → Domain-preserving masking (`user@example.com` → `us***@e***.com`)
+   - Credit cards → Secure prefix preservation (`4532-1234-5678-9012` → `4532-12************`)
+   - Addresses → Structure-preserving location masking
+   - SSNs → Complete redaction for maximum security
+4. **Privacy-Compliant Output**: Write anonymized database + comprehensive anonymization report
+
+## Technical Architecture
+
+### 🔬 **Microsoft Presidio Integration**
+- **NLP-Based Detection**: Uses spaCy `en_core_web_sm` model for context-aware PII identification
+- **Custom Recognizers**: Enhanced regex patterns for financial data and addresses
+- **Configurable Confidence**: Tunable thresholds (0.6-0.9) for precision/recall balance
+- **Multi-Language Support**: Extensible for international privacy compliance
 
 ### Submitting Compute Instructions For DLP Approval
 

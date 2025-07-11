@@ -1,0 +1,54 @@
+{
+  "pipeline_config": {
+    "enabled": true,
+    "batch_size": 1000,
+    "parallel_processing": true,
+    "num_workers": 4
+  },
+  "processing_stats": {
+    "total_tables": 2,
+    "processed_tables": 2,
+    "total_rows": 20,
+    "processed_rows": 20,
+    "anonymized_rows": 20,
+    "elapsed_time": 1.988499402999878,
+    "rows_per_second": 10.057835556715643,
+    "progress_percent": 100.0
+  },
+  "anonymization_stats": {
+    "total_values_processed": 200,
+    "total_values_anonymized": 142,
+    "anonymization_rate": 71.0,
+    "entities_found": {
+      "EMAIL_ADDRESS": 40,
+      "URL": 70,
+      "PERSON": 52,
+      "PHONE_NUMBER": 42,
+      "LOCATION": 78,
+      "US_SSN": 22,
+      "CREDIT_CARD": 20,
+      "IP_ADDRESS": 2
+    },
+    "tables_processed": {
+      "results": 10,
+      "users": 10
+    },
+    "processing_time": 1.9887685775756836
+  },
+  "presidio_config": {
+    "enabled_entities": [
+      "PERSON",
+      "EMAIL_ADDRESS",
+      "PHONE_NUMBER",
+      "US_SSN",
+      "CREDIT_CARD",
+      "LOCATION",
+      "IP_ADDRESS",
+      "URL"
+    ],
+    "nlp_model": "en_core_web_sm",
+    "supported_languages": [
+      "en"
+    ]
+  }
+}

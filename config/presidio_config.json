@@ -1,0 +1,205 @@
+{
+  "enabled": true,
+  "debug_mode": true,
+  "log_level": "INFO",
+  "entities": {
+    "person": {
+      "entity_type": "PERSON",
+      "enabled": true,
+      "confidence_threshold": 0.7,
+      "context_words": ["name", "person", "individual", "customer"],
+      "deny_list": [],
+      "regex_patterns": [],
+      "anonymization_strategy": "custom",
+      "anonymization_params": {
+        "lambda": "mask_person"
+      }
+    },
+    "email": {
+      "entity_type": "EMAIL_ADDRESS",
+      "enabled": true,
+      "confidence_threshold": 0.8,
+      "context_words": ["email", "e-mail", "mail", "contact"],
+      "deny_list": [],
+      "regex_patterns": [],
+      "anonymization_strategy": "custom",
+      "anonymization_params": {
+        "lambda": "mask_email"
+      }
+    },
+    "phone": {
+      "entity_type": "PHONE_NUMBER",
+      "enabled": true,
+      "confidence_threshold": 0.7,
+      "context_words": ["phone", "telephone", "mobile", "cell", "number"],
+      "deny_list": [],
+      "regex_patterns": [],
+      "anonymization_strategy": "mask",
+      "anonymization_params": {
+        "masking_char": "*",
+        "chars_to_mask": 7,
+        "from_end": true
+      }
+    },
+    "ssn": {
+      "entity_type": "US_SSN",
+      "enabled": true,
+      "confidence_threshold": 0.9,
+      "context_words": ["ssn", "social security", "social security number"],
+      "deny_list": [],
+      "regex_patterns": [],
+      "anonymization_strategy": "redact",
+      "anonymization_params": {}
+    },
+    "credit_card": {
+      "entity_type": "CREDIT_CARD",
+      "enabled": true,
+      "confidence_threshold": 0.7,
+      "context_words": ["credit card", "card number", "payment", "visa", "mastercard", "card", "cc", "creditcard"],
+      "deny_list": [],
+      "regex_patterns": [
+        {
+          "name": "visa_dash_format",
+          "regex": "\\b4\\d{3}-\\d{4}-\\d{4}-\\d{4}\\b",
+          "score": 0.9
+        },
+        {
+          "name": "mastercard_dash_format", 
+          "regex": "\\b5\\d{3}-\\d{4}-\\d{4}-\\d{4}\\b",
+          "score": 0.9
+        },
+        {
+          "name": "amex_dash_format",
+          "regex": "\\b3[0-9]\\d{2}-\\d{4}-\\d{4}-\\d{4}\\b",
+          "score": 0.9
+        },
+        {
+          "name": "generic_dash_format",
+          "regex": "\\b\\d{4}-\\d{4}-\\d{4}-\\d{4}\\b",
+          "score": 0.8
+        }
+      ],
+      "anonymization_strategy": "mask",
+      "anonymization_params": {
+        "masking_char": "*",
+        "chars_to_mask": 12,
+        "from_end": true
+      }
+    },
+    "location": {
+      "entity_type": "LOCATION",
+      "enabled": true,
+      "confidence_threshold": 0.6,
+      "context_words": ["address", "location", "city", "state", "country"],
+      "deny_list": [],
+      "regex_patterns": [],
+      "anonymization_strategy": "custom",
+      "anonymization_params": {
+        "lambda": "mask_location"
+      }
+    },
+    "date": {
+      "entity_type": "DATE_TIME",
+      "enabled": false,
+      "confidence_threshold": 0.7,
+      "context_words": ["date", "time", "when", "birthday", "created_at", "born", "dob"],
+      "deny_list": [],
+      "regex_patterns": [],
+      "anonymization_strategy": "mask",
+      "anonymization_params": {
+        "masking_char": "*",
+        "chars_to_mask": 6,
+        "from_end": true
+      }
+    },
+    "ip_address": {
+      "entity_type": "IP_ADDRESS",
+      "enabled": true,
+      "confidence_threshold": 0.8,
+      "context_words": ["ip", "ip address", "address", "host"],
+      "deny_list": [],
+      "regex_patterns": [],
+      "anonymization_strategy": "mask",
+      "anonymization_params": {
+        "masking_char": "*",
+        "chars_to_mask": 8,
+        "from_end": true
+      }
+    },
+    "url": {
+      "entity_type": "URL",
+      "enabled": true,
+      "confidence_threshold": 0.7,
+      "context_words": ["url", "website", "link", "domain"],
+      "deny_list": [],
+      "regex_patterns": [],
+      "anonymization_strategy": "mask",
+      "anonymization_params": {
+        "masking_char": "*",
+        "chars_to_mask": 10,
+        "from_end": true
+      }
+    },
+    "organization": {
+      "entity_type": "ORG",
+      "enabled": false,
+      "confidence_threshold": 0.7,
+      "context_words": ["company", "organization", "org", "corporation"],
+      "deny_list": [],
+      "regex_patterns": [],
+      "anonymization_strategy": "mask",
+      "anonymization_params": {
+        "masking_char": "*",
+        "chars_to_mask": 6,
+        "from_end": true
+      }
+    },
+    "money": {
+      "entity_type": "MONEY",
+      "enabled": false,
+      "confidence_threshold": 0.8,
+      "context_words": ["money", "amount", "price", "cost", "salary"],
+      "deny_list": [],
+      "regex_patterns": [],
+      "anonymization_strategy": "mask",
+      "anonymization_params": {
+        "masking_char": "*",
+        "chars_to_mask": 4,
+        "from_end": true
+      }
+    },
+    "bank_account": {
+      "entity_type": "IBAN_CODE",
+      "enabled": false,
+      "confidence_threshold": 0.9,
+      "context_words": ["bank account", "account number", "iban", "routing"],
+      "deny_list": [],
+      "regex_patterns": [],
+      "anonymization_strategy": "redact",
+      "anonymization_params": {}
+    }
+  },
+  "anonymization": {
+    "default_strategy": "mask",
+    "default_replacement": "<REDACTED>",
+    "preserve_format": true,
+    "mask_char": "*",
+    "mask_from_end": true,
+    "hash_type": "sha256",
+    "encryption_key": null
+  },
+  "batch_processing": {
+    "batch_size": 1000,
+    "max_memory_mb": 512,
+    "enable_parallel_processing": true,
+    "num_workers": 4
+  },
+  "nlp": {
+    "engine_name": "spacy",
+    "model_name": "en_core_web_sm",
+    "supported_languages": ["en"],
+    "custom_models": {
+      "en": "en_core_web_sm"
+    }
+  }
+}

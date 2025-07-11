@@ -1,4 +1,4 @@
-# Vana PII Anonymization Compute Job
+# Vana Data Access - PII Anonymization Compute Job
 
 This is a **privacy-preserving compute job** that automatically detects and anonymizes personally identifiable information (PII) in query results using Microsoft Presidio. Designed for Vana's Trusted Execution Environment (TEE) infrastructure, it ensures sensitive data is protected while maintaining analytical value.
 
